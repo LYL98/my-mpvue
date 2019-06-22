@@ -1,7 +1,7 @@
 <template>
     <div v-if="detail">
         <swiper indicator-dots autoplay circular>
-            <block v-for="item in detail.pics" :key="item.pics_id">
+            <block v-for="item in goods_detail.pics" :key="item.pics_id">
                     <swiper-item>
                         <image mode="aspectFill" @click="preview(item.pics_mid_url)" :src="item.pics_mid_url"></image>
                     </swiper-item>
@@ -10,10 +10,10 @@
          <!-- 2.0 商品的基本信息 -->
     <view class="product-info">
       <view class="product-head">
-        <text class="price">￥{{detail.goods_price}}</text>
+        <text class="price">￥{{goods_detail.goods_price}}</text>
       </view>
       <view class="product-body">
-        <view class="product-name">{{detail.goods_name}}</view>
+        <view class="product-name">{{goods_detail.goods_name}}</view>
         <view class="product-like">
           <view class="iconfont icon-shoucang"></view>
           <view>
@@ -65,7 +65,7 @@
 export default {
     data(){
         return {
-            detail: {},
+            goods_detail: {},
             address:null
         }
     },
@@ -77,7 +77,7 @@ export default {
      methods: {
          async getGoodsDetailData(goods_id){
             const res = await this.$axios.get(`goods/detail?goods_id=${goods_id}`)
-            this.detail =  res.data.message
+            this.goods_detail =  res.data.message
          },
          preview(current){
              wx.previewImage({
