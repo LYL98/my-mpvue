@@ -11,7 +11,7 @@ export default {
     getUserLocation(){
       wx.getLocation({
         success: res => {
-          console.log(res)
+          console.log(res )
         },
       
       })
