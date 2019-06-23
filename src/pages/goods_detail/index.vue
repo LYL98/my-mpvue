@@ -1,5 +1,5 @@
 <template>
-    <div v-if="detail">
+    <div v-if="goods_detail">
         <swiper indicator-dots autoplay circular>
             <block v-for="item in goods_detail.pics" :key="item.pics_id">
                     <swiper-item>
@@ -43,8 +43,7 @@
     <!-- 4.0 收获地址 -->
     <view
       class="part"
-      @click="chooseAddress"
-    >
+      @click="chooseAddress">
       <view class="part-item">
         <text class="note">送至</text>
         <view v-if="address">
@@ -59,14 +58,55 @@
         ></view>
       </view>
     </view>
+    <!-- 图文介绍和规格参数 -->
+    <view class="tabs">
+      <view class="tabs-head">
+        <view @click="toggleSelect(index)" :class="['tabs-item',tabIndex === index? 'active':'' ]" v-for="(item,index) in tabs" :key="item">
+         <text>{{item}}</text> 
+        </view>
+      </view>
+      <view class="tabs-body">
+        <!-- 图文介绍 -->
+        <view v-show="tabIndex === 0">
+          <div v-html="goods_detail.goods_introduce"></div>
+        </view>
+        <!-- 规格参数 -->
+        <view v-show="tabIndex === 1">
+          <view v-for="(item,index) in goods_detail.attrs" :key="item .attr_id" class="param-item">
+            <text :class="['note',index === goods_detail.attrs.length-1?'param-item-last':'']">{{item.attr_name}}</text>
+            <text :class="['description',index === goods_detail.attrs.length-1?'param-item-last':'']">{{item.attr_vals}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+     <!-- 6.0 底部菜单条 -->
+    <view class="fixed-bar">
+      <view class="item">
+        <button class="contact-btn" open-type="contact"></button>
+        <view class="iconfont icon-kefu"></view>
+        <text class="note">联系客服</text>
+      </view>
+      <view @click="goToShopCart" class="item">
+        <view class="iconfont icon-gouwuche"></view>
+        <text class="note">购物车</text>
+      </view>
+      <view class="btn-group">
+        <view @click="addToShopCart" class="btn yellow-btn">加入购物车</view>
+        <view class="btn red-btn">立即购买</view>
+      </view>
+    </view>
     </div>
 </template>
 <script>
+import {addGoods} from '../common/shopcartStorage.js'
 export default {
     data(){
         return {
-            goods_detail: {},
-            address:null
+            goods_detail: {},//商品详情数据
+            address:null,
+            tabs: ["图文介绍","规则参数"],
+            tabIndex: 0,//tab选中的索引
+
         }
     },
      onLoad(options){
@@ -81,7 +121,7 @@ export default {
          },
          preview(current){
              wx.previewImage({
-               urls: this.detail.pics.map(item => item.pics_mid), //需要预览的图片链接列表,
+               urls: this.goods_detail.pics.map(item => item.pics_mid), //需要预览的图片链接列表,
                 current
             })
          },
@@ -116,6 +156,21 @@ export default {
                }
              });
          },
+         //切换tab
+         toggleSelect(index){
+           this.tabIndex = index
+         },
+         //跳转到购物车
+         goToShopCart(){
+           wx.switchTab({ url: '/pages/shopcart/main' });
+         },
+        //加入购物车
+         addToShopCart(){
+           addGoods({
+             goods_id: this.goods_detail.goods_id,
+             goods_number: 1
+           })
+         }
      }
 }
 </script>
