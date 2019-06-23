@@ -166,6 +166,14 @@ export default {
          },
         //加入购物车
          addToShopCart(){
+           wx.showToast({
+             title: '加入购物车成功', //提示的内容,
+             icon: 'none', //图标,
+             image: '/static/img/duigou.png',
+             duration: 2000, //延迟时间,
+             mask: true, //显示透明蒙层，防止触摸穿透,
+             success: res => {}
+           });
            addGoods({
              goods_id: this.goods_detail.goods_id,
              goods_number: 1

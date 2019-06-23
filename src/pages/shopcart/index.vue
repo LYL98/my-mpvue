@@ -1,7 +1,7 @@
 <template>
   <div>
     <view v-if="isEmpty" class="empty-car">
-      <image src="/static/img/kong.png" />>
+      <image src="/static/img/kong.png" />
       <text class="empty-car-tips">购物车还是空的</text>
       <text class="empty-car-tips extra">快去逛逛吧</text>
     </view>
@@ -82,7 +82,7 @@ export default {
       isAllSelect: true //是否全选
     };
   },
-  onLoad() {
+  onShow() {
     this.getShopCartData();
   },
   computed: {
@@ -182,7 +182,7 @@ export default {
             //可以用ES6数组的新方法来找到要删除的元素
             
             const deleteIndex = this.goodsList.findIndex(item=>item.goods_id === goods_id)
-            ths.goodsList.splice(deleteIndex,1)
+            this.goodsList.splice(deleteIndex,1)
             //判断是否为空,空就显示应该的提示
             this.isEmpty = this.goodsList.length === 0
           } else if (res.cancel) {
