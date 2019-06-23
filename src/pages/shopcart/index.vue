@@ -192,7 +192,23 @@ export default {
       });
     },
     goToPay(){
-      
+      const ids = []
+      this.goodsList.forEach(item=>{
+        if(item.isSelect){
+          ids.push(item.goods_id)
+        }
+      })
+      if(ids.length === 0){
+        wx.showToast({
+          title: '请选择商品结算', //提示的内容,
+          icon: 'none', //图标,
+          duration: 2000, //延迟时间,
+          mask: true, //显示透明蒙层，防止触摸穿透,
+          success: res => {}
+        })
+        return
+      }
+      wx.navigateTo({ url: `/pages/pay/main?ids=${ids.join(',')}`});
     }
   }
 };

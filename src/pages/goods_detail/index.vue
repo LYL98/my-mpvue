@@ -99,7 +99,9 @@
 </template>
 <script>
 import {addGoods} from '../common/shopcartStorage.js'
+// import chooseAddress from '../../mixins/ChooseAdress' //引入混入
 export default {
+    // mixins: [chooseAddress],//使用混入
     data(){
         return {
             goods_detail: {},//商品详情数据
