@@ -47,7 +47,7 @@ export const updateGoods = goods=>{
  * 删除
  * @param {*} goods_id 要删除的id
  */
-export const deleteGoods = goods=>{
+export const deleteGoods = goods_id=>{
   // 1、从本地取出 {商品id1:数量,商品id2:数量}
   const localGoods = getLocalGoods()
  // 2、删除id对应的属性
