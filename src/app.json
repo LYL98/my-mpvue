@@ -5,6 +5,7 @@
     "pages/pay/main",
     "pages/category/main",
     "pages/shopcart/main",
+    "pages/orders/main",
     "pages/my/main"
   ],
   "window": {

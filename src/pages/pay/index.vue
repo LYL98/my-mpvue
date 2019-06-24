@@ -42,6 +42,23 @@
         </view>
       </block>
     </view>
+    <!-- 3.0 金额统计 -->
+    <view class="order-total">
+      <view class="order-total-item">
+        <text>商品金额</text>
+        <text class="order-total-item-price">￥{{totalAmount}}</text>
+      </view>
+      <view class="order-total-item">
+        <text>运 费</text>
+        <text class="order-total-item-price">￥+0.00</text>
+      </view>
+      <block v-if="token">
+        <view @click="goToOrder" class="wxPay">微信支付</view>
+      </block>
+      <block v-else>
+        <button @getuserinfo="wxLogin" open-type="getUserInfo" class="wxLogin">登录后下单支付</button>
+      </block>
+    </view>
   </div>
 </template>
 
@@ -51,16 +68,29 @@ export default {
   data() {
     return {
       address:null,
-      goodsList: []
+      goodsList: [],
+      token: null,//登录之后获取的Token值
+      totalAmount: 0,
     };
   },
   onLoad(options) {
     this.getGoodsListData(options.ids)
-
+    this.totalAmount = 0
     if (wx.getStorageSync('address')){
       this.address = wx.getStorageSync('address')
     }
+    //本地查找是否登录过
+    if(wx.getStorageSync('token')){
+      this.token = wx.getStorageSync('token')
+    }
+    //提前进行微信登录,避免刷新登录态
+    wx.login({
+      success: res => {}
+     
+    })
   },
+  
+  
   methods: {
     async getGoodsListData(ids) {
       // 去本地获取商品
@@ -70,6 +100,7 @@ export default {
 
       res.data.message.forEach(item => {
         item.goods_number = localGoods[item.goods_id];
+        this.totalAmount += item.goods_number * item.goods_price
       });
 
       // 先处理好数据，再赋值
@@ -106,7 +137,142 @@ export default {
           }
         }
       })
-    }
+    },
+    //微信登录
+    async wxLogin(e){
+      //如果用户拒绝了,就返回
+      if(e.mp.detail.errMsg === 'getUserInfo:fail auth deny') return
+      //判断用户登录状态是否有效
+      // const res = await new Promise((resolve,reject)=>{
+      //   wx.checkSession({
+      //     success: res => {
+      //       resolve(res)
+      //     },
+      //     fail: err => {
+      //       reject(res)
+      //     }
+      //   })
+      // })
+      // const res1 = await new Promise((resolve,reject)=>{
+      //      wx.login({
+      //       success: res => {
+      //         resolve(res)
+      //       },
+      //       fail: err =>{
+      //         reject(err)
+      //       }
+      //     })
+
+      // })
+      wx.login({
+        success: async res => {
+          //获取用户信息
+          const {code,encryptedData,iv,rawData,signature} = e.mp.detail
+          //进行微信登录
+            const res2 = await this.$axios.post('users/wxlogin', {
+                code: res.code,
+                encryptedData,
+                iv,
+                rawData,
+                signature
+              })
+              //登陆成功后
+              if(res2.statusCode === 200){
+                //赋值token给模型
+                this.token = res2.data.message.token
+                //保存
+                wx.getStorageSync('token',res2.data.message.token);
+              }
+          },
+      });
+
+     
+      
+    },
+     // 下单
+    async goToOrder(){
+      if (!this.address){
+        wx.showToast({
+          title: '请选择收货地址', //提示的内容,
+          image: '/static/img/error.png', //图标,
+          duration: 2000, //延迟时间,
+          mask: true, //显示透明蒙层，防止触摸穿透
+        });
+        return
+      }
+      // 准备好后台需要的参数
+      const params = {
+        order_price:this.totalAmount,//总价格
+        consignee_addr:`${this.address.detailAddress} ${this.address.userName} ${this.addres.telNumber}`,//收货地址
+        goods:this.goodsList.map(item => {
+          return {
+            goods_id: item.goods_id,
+            goods_number: item.goods_number,
+            goods_price: item.goods_price
+          }
+        })
+      }
+
+      // 才发送请求
+      /**
+      const res = await this.$axios.post('my/orders/create',params)
+      if (res.data.meta.status === 200){
+        // 对生成的订单进行支付
+        this.pay(res.data.message.order_number)
+      }
+       */
+     this.pay("HMDD20190526000000001095")
+    },
+   async pay(order_number){
+        const res = await this.$axios.post('my/orders/req_unifiedorder',{
+          order_number
+        })
+        //唤起微信支付
+        wx.requestPayment({
+          timeStamp: res.data.message.pay.timeStamp, //时间戳从1970年1月1日00:00:00至今的秒数,即当前的时间,
+          nonceStr: res.data.message.pay.nonceStr, //随机字符串，长度为32个字符以下,
+          package: res.data.message.pay.package, //统一下单接口返回的 prepay_id 参数值，提交格式如：prepay_id=*,
+          signType: res.data.message.pay.signType, //签名算法，暂支持 MD5,
+          paySign: res.data.message.pay.paySign, //签名,具体签名方案参见小程序支付接口文档,
+          success: async res => {
+            //调用后台接口,更改订单状态为待收货
+            const res2 = await this.$axios.post('my/orders/chkOrder',{
+              order_number
+            })
+            
+            //跳转到订单页面,type=3
+            if(res2.data.meta.status ===200){
+              wx.showToast({
+              title: '支付成功', //提示的内容,
+              icon: '/static/img/duigou.png', //图标,
+              duration: 2000, //延迟时间,
+              mask: true, //显示透明蒙层，防止触摸穿透,
+              success: res => {}
+            });
+              setTimeout(()=>{
+                  //跳转到订单页面,type=2
+                  wx.navigateTo({ url: '/pages/orders/main?type=3' });
+                },2000)
+            }
+          },
+          fail: ({errMsg}) => {
+              if(errMsg === 'requestPayment:fail cancel'){
+                wx.showToast({
+                  title: '您取消了支付', //提示的内容,
+                  icon: '/static/img/error2.png', //图标,
+                  duration: 2000, //延迟时间,
+                  mask: true, //显示透明蒙层，防止触摸穿透,
+                  success: res => {}
+                })
+                setTimeout(()=>{
+                  //跳转到订单页面,type=2
+                  wx.navigateTo({ url: '/pages/orders/main?type=2' });
+                },2000)
+              }
+          },
+          complete: () => {}
+        });
+    },
   }
 };
 </script>
