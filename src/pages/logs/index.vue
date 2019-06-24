@@ -37,13 +37,13 @@ export default {
   },
 
   created () {
-    let logs
-    if (mpvuePlatform === 'my') {
-      logs = mpvue.getStorageSync({key: 'logs'}).data || []
-    } else {
-      logs = mpvue.getStorageSync('logs') || []
-    }
-    this.logs = logs.map(log => formatTime(new Date(log)))
+    // let logs
+    // if (mpvuePlatform === 'my') {
+    //   logs = mpvue.getStorageSync({key: 'logs'}).data || []
+    // } else {
+    //   logs = mpvue.getStorageSync('logs') || []
+    // }
+    // this.logs = logs.map(log => formatTime(new Date(log)))
   }
 }
 </script>
